@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Renders the collapsible banner + search bar.
-///
-/// Implements [SliverPersistentHeaderDelegate] so it integrates
-/// natively with [CustomScrollView] — no magic numbers needed.
-/// The header height interpolates between [minExtent] and [maxExtent]
-/// as the user scrolls.
 class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const CollapsibleHeaderDelegate({required this.onMenuTap});
+  const CollapsibleHeaderDelegate({
+    required this.onMenuTap,
+    required this.topPadding, // ✅ status bar height passed in from outside
+  });
 
   final VoidCallback onMenuTap;
+  final double topPadding;
 
-  static const double _maxHeight = 180.0;
-  static const double _minHeight = 60.0;
+  static const double _topBarHeight = 56.0;
+  static const double _searchHeight = 56.0;
+  static const double _bannerHeight = 68.0;
+
+  // ✅ extents now include status bar padding
+  @override
+  double get maxExtent =>
+      topPadding + _topBarHeight + _searchHeight + _bannerHeight;
 
   @override
-  double get maxExtent => _maxHeight;
+  double get minExtent => topPadding + _topBarHeight;
 
   @override
-  double get minExtent => _minHeight;
-
-  @override
-  bool shouldRebuild(CollapsibleHeaderDelegate oldDelegate) => false;
+  bool shouldRebuild(CollapsibleHeaderDelegate oldDelegate) =>
+      oldDelegate.topPadding != topPadding;
 
   @override
   Widget build(
@@ -30,86 +32,125 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    // 0.0 = fully expanded, 1.0 = fully collapsed
-    final collapse = (shrinkOffset / (_maxHeight - _minHeight)).clamp(0.0, 1.0);
-    final showBanner = collapse < 0.5;
+    // How much of the collapsible range has been consumed
+    final collapsibleRange =
+        maxExtent - minExtent; // = searchHeight + bannerHeight
+    final collapse = collapsibleRange == 0
+        ? 0.0
+        : (shrinkOffset / collapsibleRange).clamp(0.0, 1.0);
 
-    return Container(
-      color: AppTheme.primary,
-      child: SafeArea(
-        bottom: false,
+    // Banner fades out in the first half of the collapse
+    final bannerOpacity = (1.0 - collapse * 2).clamp(0.0, 1.0);
+
+    // Remaining height after shrinkOffset is applied
+    final availableHeight =
+        (maxExtent - shrinkOffset).clamp(minExtent, maxExtent);
+
+    // Banner gets whatever is left after topPadding + topBar + search
+    final computedBannerHeight =
+        (availableHeight - topPadding - _topBarHeight - _searchHeight)
+            .clamp(0.0, _bannerHeight);
+
+    return ClipRect(
+      // clips sub-pixel overflow during animation
+      child: Container(
+        color: AppTheme.primary,
+        // ✅ Manual top padding instead of SafeArea — we control the height
+        padding: EdgeInsets.only(top: topPadding),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Top bar (logo + icons) ─────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Row(
-                children: [
-                  // Logo
-                  const Text(
-                    'daraz',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+            // ── Top bar (logo + icons) ─────────────────────────────
+            SizedBox(
+              height: _topBarHeight,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(
+                  children: [
+                    const Text(
+                      'daraz',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {},
                     ),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.person_outline, color: Colors.white),
-                    onPressed: onMenuTap,
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.shopping_cart_outlined,
-                      color: Colors.white,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                      ),
+                      onPressed: onMenuTap,
                     ),
-                    onPressed: () {},
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(
+                        Icons.shopping_cart_outlined,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            // ── Search bar ─────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search products...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: Container(
-                    margin: const EdgeInsets.all(6),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondary,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'Search',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+            // ── Search bar ─────────────────────────────────────────
+            // Fades + slides out as header collapses
+            if (computedBannerHeight > 0 || collapse < 1.0)
+              SizedBox(
+                height: _searchHeight.clamp(
+                  0.0,
+                  (availableHeight - topPadding - _topBarHeight)
+                      .clamp(0.0, _searchHeight),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search products...',
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.grey,
+                      ),
+                      suffixIcon: Container(
+                        margin: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Search',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // ── Promo banner (fades out as header collapses) ───────────
-            if (showBanner)
-              Expanded(
+            // ── Promo banner ───────────────────────────────────────
+            if (computedBannerHeight > 0)
+              SizedBox(
+                height: computedBannerHeight,
                 child: AnimatedOpacity(
-                  opacity: 1.0 - (collapse * 2).clamp(0.0, 1.0),
+                  opacity: bannerOpacity,
                   duration: Duration.zero,
                   child: Container(
                     margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),

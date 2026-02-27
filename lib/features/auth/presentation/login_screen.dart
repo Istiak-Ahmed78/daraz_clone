@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 
@@ -32,6 +33,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ── Navigation Listener ─────────────────────────────────────────────────
+    // ref.listen is the correct way to react to state changes for
+    // side-effects like navigation. Using ref.watch for navigation
+    // inside build() can cause "setState during build" errors.
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated) {
+        // Replace login route entirely so back button won't go back to login
+        context.go('/home');
+      }
+    });
+
     final authState = ref.watch(authProvider);
     final isLoading = authState.status == AuthStatus.loading;
 
@@ -101,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                   validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Enter username' : null,
+                      (v == null || v.trim().isEmpty) ? 'Enter username' : null,
                   textInputAction: TextInputAction.next,
                 ),
 
@@ -122,26 +134,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Enter password' : null,
+                      (v == null || v.trim().isEmpty) ? 'Enter password' : null,
                   onFieldSubmitted: (_) => _submit(),
                 ),
 
                 const SizedBox(height: 8),
 
-                // ── Error message ─────────────────────────────────────────
-                if (authState.status == AuthStatus.error)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      authState.errorMessage ?? 'Login failed',
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+                // ── Error Message ─────────────────────────────────────────
+                // AnimatedSize makes the error message appear/disappear smoothly
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  child: authState.status == AuthStatus.error
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  authState.errorMessage ?? 'Login failed',
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
 
                 const SizedBox(height: 24),
 
-                // ── Submit button ─────────────────────────────────────────
+                // ── Submit Button ─────────────────────────────────────────
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
@@ -174,7 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: 16),
 
-                // ── Demo hint ─────────────────────────────────────────────
+                // ── Demo Hint ─────────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -189,6 +223,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),
