@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/presentation/login_screen.dart';
-import 'features/products/presentation/home_screen.dart';
+import 'features/products/presentation/pages/main_shell.dart'; // ← changed
 
 void main() {
   runApp(const ProviderScope(child: DarazApp()));
@@ -23,7 +23,7 @@ class DarazApp extends StatelessWidget {
   }
 }
 
-/// Routes between [LoginScreen] and [HomeScreen] based on auth state.
+/// Routes between [LoginScreen] and [MainShell] based on auth state.
 /// Uses [AuthStatus.initial] / [AuthStatus.loading] to show a splash
 /// while the session check runs on startup.
 class _AuthGate extends ConsumerWidget {
@@ -35,7 +35,7 @@ class _AuthGate extends ConsumerWidget {
 
     return switch (authState.status) {
       AuthStatus.initial || AuthStatus.loading => const _SplashScreen(),
-      AuthStatus.authenticated => const HomeScreen(),
+      AuthStatus.authenticated => const MainShell(), // ← changed
       _ => const LoginScreen(),
     };
   }
