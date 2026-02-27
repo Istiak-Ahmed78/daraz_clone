@@ -8,7 +8,7 @@ A Flutter application that mimics a Daraz-style product listing screen, built wi
 
 ```bash
 # 1. Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/Istiak-Ahmed78/daraz_clone.git
 cd daraz_clone
 
 # 2. Install dependencies
@@ -21,9 +21,6 @@ dart run build_runner build --delete-conflicting-outputs
 flutter run
 ```
 
-> Tested on Flutter 3.x — no additional setup required.
-
----
 
 ## 📱 Features
 
