@@ -73,8 +73,6 @@ class _ProductPageViewState extends ConsumerState<ProductPageView> {
           return;
         }
 
-        // velocity > 0 → swipe right → go to previous tab
-        // velocity < 0 → swipe left  → go to next tab
         _onHorizontalSwipe(velocity > 0 ? -1 : 1);
         _dragStart = null;
       },
@@ -82,13 +80,9 @@ class _ProductPageViewState extends ConsumerState<ProductPageView> {
       behavior: HitTestBehavior.translucent,
       child: PageView.builder(
         controller: widget.pageController,
-        // ── CRITICAL: disable PageView's own scroll physics ───────────
-        // The GestureDetector above handles horizontal navigation.
-        // This prevents ANY conflict with the outer CustomScrollView.
         physics: const NeverScrollableScrollPhysics(),
         itemCount: widget.categories.length,
         onPageChanged: (index) {
-          // Sync tab bar when page changes (e.g. programmatic navigation)
           ref.read(activeTabIndexProvider.notifier).state = index;
         },
         itemBuilder: (context, index) {

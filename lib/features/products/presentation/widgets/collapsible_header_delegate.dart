@@ -4,7 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
   const CollapsibleHeaderDelegate({
     required this.onMenuTap,
-    required this.topPadding, // ✅ status bar height passed in from outside
+    required this.topPadding,
   });
 
   final VoidCallback onMenuTap;
@@ -14,7 +14,6 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
   static const double _searchHeight = 56.0;
   static const double _bannerHeight = 68.0;
 
-  // ✅ extents now include status bar padding
   @override
   double get maxExtent =>
       topPadding + _topBarHeight + _searchHeight + _bannerHeight;
@@ -46,7 +45,6 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
     final availableHeight =
         (maxExtent - shrinkOffset).clamp(minExtent, maxExtent);
 
-    // Banner gets whatever is left after topPadding + topBar + search
     final computedBannerHeight =
         (availableHeight - topPadding - _topBarHeight - _searchHeight)
             .clamp(0.0, _bannerHeight);
@@ -55,7 +53,6 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
       // clips sub-pixel overflow during animation
       child: Container(
         color: AppTheme.primary,
-        // ✅ Manual top padding instead of SafeArea — we control the height
         padding: EdgeInsets.only(top: topPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,7 +103,6 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
             ),
 
             // ── Search bar ─────────────────────────────────────────
-            // Fades + slides out as header collapses
             if (computedBannerHeight > 0 || collapse < 1.0)
               SizedBox(
                 height: _searchHeight.clamp(

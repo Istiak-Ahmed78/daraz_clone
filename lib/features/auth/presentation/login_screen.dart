@@ -34,12 +34,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     // ── Navigation Listener ─────────────────────────────────────────────────
-    // ref.listen is the correct way to react to state changes for
-    // side-effects like navigation. Using ref.watch for navigation
-    // inside build() can cause "setState during build" errors.
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
-        // Replace login route entirely so back button won't go back to login
         context.go('/home');
       }
     });
@@ -141,7 +137,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 8),
 
                 // ── Error Message ─────────────────────────────────────────
-                // AnimatedSize makes the error message appear/disappear smoothly
                 AnimatedSize(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,

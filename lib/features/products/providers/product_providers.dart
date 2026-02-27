@@ -4,7 +4,6 @@ import '../domain/product_model.dart';
 
 // ── Categories ────────────────────────────────────────────────────────────────
 /// Fetches and caches the list of categories.
-/// The "all" tab is prepended manually.
 final categoriesProvider = FutureProvider<List<String>>((ref) async {
   final repo = ref.read(productRepositoryProvider);
   final cats = await repo.fetchCategories();
@@ -13,7 +12,6 @@ final categoriesProvider = FutureProvider<List<String>>((ref) async {
 
 // ── Products per tab ──────────────────────────────────────────────────────────
 /// Family provider: each category gets its own cached AsyncValue<List<Product>>.
-/// Passing 'all' fetches all products.
 final productsProvider = FutureProvider.family<List<Product>, String>((
   ref,
   category,

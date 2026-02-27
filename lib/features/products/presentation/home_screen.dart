@@ -47,7 +47,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesProvider);
 
-    // ✅ Read status bar height ONCE here in build context
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -69,7 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 floating: true,
                 delegate: CollapsibleHeaderDelegate(
                   onMenuTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-                  topPadding: topPadding, // ✅ pass status bar height
+                  topPadding: topPadding,
                 ),
               ),
 

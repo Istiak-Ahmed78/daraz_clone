@@ -35,7 +35,7 @@ class AuthRepository {
         await tokenRepo.save(loginResponse.token);
       } else {
         // Body was not a valid token response
-        throw AuthException(
+        throw const AuthException(
           'Invalid credentials. Please check your username and password.',
         );
       }
