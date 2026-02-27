@@ -126,7 +126,7 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
                       ),
                       suffixIcon: Container(
                         margin: const EdgeInsets.all(6),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: AppTheme.secondary,
                           borderRadius: BorderRadius.circular(6),
